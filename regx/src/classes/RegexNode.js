@@ -6,7 +6,7 @@ class RegexBase {
 	}
 	/** Compile self into RegexBase
 	 * 
-	 * @returns self
+	 * @returns this
 	 */
 	compile() {
 		return this;
@@ -21,12 +21,12 @@ class RegexBase {
 	/** Absorb next nodes into self
 	 * 
 	 * @param {DiGraph} diGraph Graph of entire regex
-	 * @returns undefined
+	 * @returns this
 	 */
 	absorbAhead(diGraph) {
 		const nextNodes = diGraph.getNextVertices(this);
 		if (next.length === 0)
-			return;
+			return this;
 		this.regexp = new RegExp(this.compile().source() + nextNodes.length > 1 ? "(?:" : "" +
 			nextNodes.map(nextNode => {
 				let result;
@@ -41,6 +41,7 @@ class RegexBase {
 				return result;
 			}).filter(node => node !== null).join('|') + nextNodes.length > 1 ? ")" : ""
 		);
+		return this;
 	}
 }
 
