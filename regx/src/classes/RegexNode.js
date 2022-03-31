@@ -31,7 +31,7 @@ class RegexBase {
 			nextNodes.map(nextNode => {
 				let result;
 				if (nextNode === this) {
-					result = "*"; // loopback on self, 0 - unlimited times
+					result = this.compile().source() + "*"; // loopback on self, 0 - unlimited times
 					diGraph.removeEdge(this, this);
 				} else {
 					diGraph.getNextVerticies(nextNode).map(nextNextNode => diGraph.addEdge(this, nextNextNode));
