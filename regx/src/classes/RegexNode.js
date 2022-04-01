@@ -1,5 +1,3 @@
-import DiGraph from "./DiGraph";
-
 class RegexBase {
 	constructor(regexp) {
 		this.regexp = regexp;
@@ -12,7 +10,7 @@ class RegexBase {
 		return this.compile().regexp;
 	}
 	toString() {
-		return this.regexp.source;
+		return this.regexp?.source ?? this.compile().source();
 	}
 	/** Compile self into RegexBase
 	 * 
@@ -28,33 +26,16 @@ class RegexBase {
 	source() {
 		return this.regexp.source;
 	}
-	/** Absorb next nodes into self
+	/** Series combine this regex with other
+	 * Only call if no branching is between this and other
 	 * 
-	 * @param {DiGraph} diGraph Graph of entire regex
-	 * @returns this
+	 * @param {RegexBase} other 
 	 */
-	absorbAhead(diGraph) {
-		const nextNodes = diGraph.getNextVertices(this);
-		if (nextNodes.length > 0) {
-			this.regexp = new RegExp(
-				this.compile().source() +
-				(nextNodes.length > 1 ? "(?:" : "") +
-				nextNodes.map(nextNode => {
-					let result;
-					if (nextNode === this) {
-						result = this.compile().source() + "*"; // loopback on self, 0 - unlimited times
-						diGraph.removeEdge(this, this);
-					} else {
-						diGraph.getNextVertices(nextNode).map(nextNextNode => diGraph.addEdge(this, nextNextNode));
-						result = nextNode.compile().source();
-						diGraph.removeVertex(nextNode);
-					}
-					return result;
-				}).filter(node => node !== null).join('|') +
-				nextNodes.length > 1 ? ")" : ""
-			);
-		}
-		return this;
+	concat(other) {
+		this.regexp = new RegExp(
+			this.compile().source()
+			+ other.compile().source()
+		);
 	}
 }
 
@@ -71,14 +52,34 @@ class RegexPlainString extends RegexBase {
 	 * @returns compiled RegexBase version of self
 	 */
 	compile() {
-		if (!this.regexp) {
-			this.regexp = new RegexBase(this.value);
+		if (this.regexp === null) {
+			this.regexp = new RegExp(this.value);
 		}
-		return this.regexp;
+		return new RegexBase(this.regexp);
+	}
+}
+
+class RegexRepetition extends RegexBase {
+	/**
+	 * 
+	 * @param {RegExp} regexp 
+	 * @param {Boolean} oneOrMore 
+	 */
+	constructor(regexp, oneOrMore) {
+		super(null);
+		this.oneOrMore = oneOrMore;
+		this.sourceRegexp = regexp;
+	}
+	compile() {
+		if (this.regexp === null) {
+			this.regexp = new RegExp(`(?:${this.sourceRegexp})${this.oneOrMore ? '+' : '*'}`);
+		}
+		return new RegexBase(this.regexp);
 	}
 }
 
 export {
 	RegexBase,
 	RegexPlainString,
+	RegexRepetition,
 }
