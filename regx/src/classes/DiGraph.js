@@ -19,10 +19,25 @@ export default class DiGraph {
 		this.adjList.get(to).prev.delete(from);
 	}
 	getNextVertices(obj) {
-		return [...this.adjList.get(obj).next];
+		return [...(this.adjList.get(obj)?.next ?? [])];
 	}
 	getPrevVertices(obj) {
-		return [...this.adjList.get(obj).prev];
+		return [...(this.adjList.get(obj)?.prev ?? [])];
+	}
+	getBypasses(obj) {
+		const adj = this.adjList.get(obj);
+		const bypasses = [];
+		const verticesAfterObj = [...(adj.next)].filter(v => v !== obj);
+		const verticesBeforeObj = [...(adj.prev)].filter(v => v !== obj);
+		for (const vertexBeforeObj of verticesBeforeObj) {
+			for (const vertex of this.getNextVertices(vertexBeforeObj)) {
+				const bypassedTo = verticesAfterObj.find(v => v === vertex) ?? null;
+				if (bypassedTo === null)
+					continue;
+				bypasses.push([vertexBeforeObj, bypassedTo]);
+			}
+		}
+		return bypasses;
 	}
 	dumpString() {
 		let result = "";
